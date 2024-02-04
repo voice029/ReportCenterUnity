@@ -1,0 +1,15 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:VisualElement name="groupedItemVisualElement" style="flex-grow: 1;">
+        <ui:VisualElement style="flex-grow: 0; flex-direction: row;">
+            <ui:Label tabindex="-1" text="GroupName" parse-escape-sequences="true" display-tooltip-when-elided="true" name="groupName" style="-unity-font-style: bold; font-size: 16px;" />
+            <ui:Label tabindex="-1" text="Label" parse-escape-sequences="true" display-tooltip-when-elided="true" name="keySearch" style="font-size: 11px; -unity-font-style: italic;" />
+            <ui:VisualElement style="flex-grow: 1;" />
+            <ui:Label tabindex="-1" text="GroupStats" parse-escape-sequences="true" display-tooltip-when-elided="true" name="groupStats" style="font-size: 11px;" />
+        </ui:VisualElement>
+        <ui:VisualElement name="groupRegion" style="flex-grow: 1; flex-direction: row;">
+            <ui:VisualElement style="flex-grow: 0; width: 12px;" />
+            <ui:VisualElement name="groupedReportList" style="flex-grow: 1;" />
+        </ui:VisualElement>
+        <ui:Label tabindex="-1" text="End" parse-escape-sequences="true" display-tooltip-when-elided="true" name="end" />
+    </ui:VisualElement>
+</ui:UXML>

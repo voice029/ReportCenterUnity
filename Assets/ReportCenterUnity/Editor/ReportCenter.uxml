@@ -1,0 +1,20 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="True">
+    <uie:Toolbar>
+        <ui:DropdownField index="-1" choices="System.Collections.Generic.List`1[System.String]" name="role" tooltip="Role" style="flex-shrink: 1;" />
+        <ui:DropdownField index="-1" choices="System.Collections.Generic.List`1[System.String]" name="category" tooltip="Category" style="flex-shrink: 1;" />
+        <ui:VisualElement style="flex-grow: 1;" />
+        <uie:ObjectField name="objectSearch" />
+        <uie:ToolbarPopupSearchField focusable="true" name="search" />
+        <uie:ToolbarMenu tabindex="-1" parse-escape-sequences="true" display-tooltip-when-elided="true" text="Settings" name="settingMenu" />
+    </uie:Toolbar>
+    <ui:VisualElement style="flex-grow: 0;">
+        <ui:GroupBox />
+    </ui:VisualElement>
+    <ui:VisualElement style="flex-grow: 1; visibility: visible;">
+        <ui:ListView focusable="true" name="reportList" virtualization-method="DynamicHeight" style="flex-grow: 1;" />
+        <ui:VisualElement name="status" style="flex-grow: 0; flex-direction: row;">
+            <ui:VisualElement style="flex-grow: 1;" />
+            <ui:Label tabindex="-1" text="Label" parse-escape-sequences="true" display-tooltip-when-elided="true" name="stats" style="font-size: 12px;" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
