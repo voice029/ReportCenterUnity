@@ -114,9 +114,7 @@ public abstract class ReportEntryBase
   /// <param name="userData">Default is null.  This provides a </param>
   public abstract void Report(object userData = null);
   
-  
   public static Object DefaultGroup = new();
-  
   
   static ReportEntryBase()
   {

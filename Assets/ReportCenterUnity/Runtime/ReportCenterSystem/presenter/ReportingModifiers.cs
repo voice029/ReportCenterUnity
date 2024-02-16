@@ -70,7 +70,7 @@ namespace ReportCenterSystem
             }
         }
 
-        public IEqualityComparer<ReportEntryBase> DistinctReportEntryBaseComparer
+        public IEqualityComparer<ReportEntryBase> DistinctReportEntryBaseEqualityComparer
         {
             get;
             
@@ -78,9 +78,9 @@ namespace ReportCenterSystem
             private set;
         }
         
-        public static ReportingModifiers Default()
+        public static ReportingModifiers DefaultDup()
         {
-            return _sStandardModifier;
+            return (ReportingModifiers)_sStandardModifier.Clone();
         }
         
         public object Clone()
@@ -97,6 +97,7 @@ namespace ReportCenterSystem
             clone.DistinctEntryEquals = DistinctEntryEquals;
             return clone;
         }
+        
         #endregion
 
         #region Private Members
@@ -114,13 +115,13 @@ namespace ReportCenterSystem
             _sStandardModifier.TypeComparer = ReportEntryOperators.CreateTypeComparer(_sStandardModifier.TypeSorter);
             _sStandardModifier.DistinctEntryEquals = ReportEntryOperators.StandardDuplicationIdEquals;
             _sStandardModifier.DistinctEntryHasher = ReportEntryOperators.StandardTypeCompareHash;
-            _sStandardModifier.DistinctReportEntryBaseComparer = 
+            _sStandardModifier.DistinctReportEntryBaseEqualityComparer = 
                 ReportEntryOperators.CreateDistinctEqualityCompare(_sStandardModifier.DistinctEntryEquals, _sStandardModifier.DistinctEntryHasher);
         }
         
         private void ReplaceDistinctReportEqualityComparer(DistinctEntryComparerFunc distinctEntryComparerFunc, DistinctEntryHashFunc distinctEntryHashFunc)
         {
-            DistinctReportEntryBaseComparer =
+            DistinctReportEntryBaseEqualityComparer =
                 ReportEntryOperators.CreateDistinctEqualityCompare(distinctEntryComparerFunc, distinctEntryHashFunc);
         }
         

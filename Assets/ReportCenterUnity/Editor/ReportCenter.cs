@@ -11,7 +11,9 @@ using Random = System.Random;
 
 public class ReportCenter : EditorWindow
 {
+  private const string SHOW_ALL = "[All]";
   private ReportEntriesPresenter _reportPresenter = new(ReportEntries.Instance);
+  
 #region Public Members
 
   [MenuItem("Window/ReportCenter")]
@@ -50,16 +52,41 @@ public class ReportCenter : EditorWindow
   {
     // Each editor window contains a root VisualElement object
     VisualElement root = rootVisualElement;
+    
+    var randRole = new TextField("Role");
+    root.Add( randRole);
+
+    var randCat = new TextField("Cate");
+    root.Add(randCat);
+
+    var randSearch = new TextField("Searchable");
+    root.Add(randSearch);
+
+    var randGroup = new TextField("Group");
+    root.Add(randGroup);
+
+    var randMessage = new TextField("Message");
+    root.Add(randMessage);
+    
     root.Add(new Button(() => {
-      new ReportEntry
+      new ReportEntry()
       {
-        Category = new[] { (new Random().Next() % 2).ToString() }.ToList(),
-        UserRole = new[] { (new Random().Next() % 4).ToString() }.ToList(),
-        SearchKeys = new object[] {(new Random().Next() % 100)}.ToList(),
+        UserRole = new[] {randRole.value}.ToList(),
+        Category = new[] {randCat.value}.ToList(),
+        SearchKeys = new object[] {randSearch.value}.ToList(),
         Type = ReportType.Validation,
-        Group = (new Random().Next() % 3).ToString(),
-        Message = (new Random().Next()).ToString()
+        Group = randGroup.value,
+        Message = randMessage.value,
       }.Report();
+      // new ReportEntry
+      // {
+      //   Category = new[] { (new Random().Next() % 2).ToString() }.ToList(),
+      //   UserRole = new[] { (new Random().Next() % 4).ToString() }.ToList(),
+      //   SearchKeys = new object[] {(new Random().Next() % 100)}.ToList(),
+      //   Type = ReportType.Validation,
+      //   Group = (new Random().Next() % 3).ToString(),
+      //   Message = (new Random().Next()).ToString()
+      // }.Report();
     }) {
       text = "Add"
     });
@@ -74,6 +101,19 @@ public class ReportCenter : EditorWindow
     m_reportListView = fromUxml.Q<ListView>("reportList");
     m_reportListView.makeItem = () => m_GroupReportItem.Instantiate();
     m_reportListView.bindItem = GroupedReportItemBinding;
+    
+    m_RoleDropdown = rootVisualElement.Q<DropdownField>("role");
+    m_RoleDropdown.RegisterValueChangedCallback((aEvent) =>
+    {
+      m_CurrentRole = aEvent.newValue;
+    });
+    
+    
+    m_CategoryDropdown = rootVisualElement.Q<DropdownField>("category");
+    m_CategoryDropdown.RegisterValueChangedCallback(aEvent =>
+    {
+      m_CurrentCategory = aEvent.newValue;
+    });
   }
 
   private void GroupedReportItemBinding(VisualElement element, int i)
@@ -112,20 +152,6 @@ public class ReportCenter : EditorWindow
       builder.Append(displayItem);
       builder.Append(", ");
     }
-
-    element.Q<Label>("keySearch").text = builder.ToString();
-
-    m_RoleDropdown = element.Q<DropdownField>("role");
-    m_RoleDropdown.RegisterValueChangedCallback((aEvent) =>
-    {
-      m_CurrentRole = aEvent.newValue;
-    });
-    
-    m_CategoryDropdown = element.Q<DropdownField>("category");
-    m_CategoryDropdown.RegisterValueChangedCallback(aEvent =>
-    {
-      m_CurrentCategory = aEvent.newValue;
-    });
   }
   
   [SerializeField]
@@ -137,26 +163,12 @@ public class ReportCenter : EditorWindow
   private void Update()
   {
     GroupedUpdate();
-    
     m_reportListView.RefreshItems();
   }
 
-  private void GroupedUpdate()
+  private async void GroupedUpdate()
   {
     
-    m_RoleDropdown = rootVisualElement.Q<DropdownField>("role");
-    m_RoleDropdown.RegisterValueChangedCallback((aEvent) =>
-    {
-      m_CurrentRole = aEvent.newValue;
-    });
-    
-    
-    m_CategoryDropdown = rootVisualElement.Q<DropdownField>("category");
-    m_CategoryDropdown.RegisterValueChangedCallback(aEvent =>
-    {
-      m_CurrentCategory = aEvent.newValue;
-    });
-
     var searchBar = rootVisualElement.Q<ObjectField>("objectSearch");
     var searchValue = searchBar.value;
 
@@ -166,65 +178,83 @@ public class ReportCenter : EditorWindow
     var roleSearch = m_CurrentRole;
     var cateSearch = m_CurrentCategory;
     
-    bool initFilterRet = searchValue is null
-                         && String.IsNullOrEmpty(uniSearchValue)
-                         && String.IsNullOrEmpty(m_CurrentRole)
-                         && String.IsNullOrEmpty(m_CurrentCategory);
-    
     bool FilterObjects(ReportEntryBase entry, int index)
     {
-      if (initFilterRet)
-        return true;
+
       
-      bool filterRet = false;
+      bool filterRet = true;
       
       if (searchValue is not null)
       {
-        filterRet |= entry.SearchKeys.Contains(searchValue);
+        filterRet &= entry.SearchKeys.Contains(searchValue);
       }
 
       if (!String.IsNullOrEmpty(uniSearchValue))
       {
-        filterRet |= entry.MatchAnyProp(uniSearchValue);
+        filterRet &= entry.MatchAnyProp(uniSearchValue);
       }
 
-      if (!String.IsNullOrEmpty(roleSearch))
+      if (!String.IsNullOrEmpty(roleSearch) && roleSearch != SHOW_ALL)
       {
-        filterRet |= entry.Category.Contains(roleSearch);
+        filterRet &= entry.UserRole.Contains(roleSearch);
       }
       
-      if (!String.IsNullOrEmpty(cateSearch))
+      if (!String.IsNullOrEmpty(cateSearch) && cateSearch != SHOW_ALL)
       {
-        filterRet |= entry.Category.Contains(cateSearch);
+        filterRet &= entry.Category.Contains(cateSearch);
       }
       
       return filterRet;
     }
 
-    var reportMod = ReportingModifiers.Default();
+    ReportingModifiers reportMod = ReportingModifiers.DefaultDup();
     reportMod.EntriesFilter = FilterObjects;
-    
-    var groupedEntries = _reportPresenter.GenGroupedReports(reportMod);
+
+    var groupedEntries = await _reportPresenter.GenGroupReportsAysnc(reportMod);
+    // var groupedEntries = _reportPresenter.GenGroupedReports(reportMod);
 
     if (m_RoleDropdown is not null)
     {
-      List<string> roles = _reportPresenter.Roles; // m_Roles.ToList();
-      int currentIndex = roles.FindIndex(x => x.Equals(m_CurrentRole));
-      m_RoleDropdown.choices = roles;
-      if (currentIndex > -1)
+      var roles = _reportPresenter.Roles; // m_Roles.ToList();
+      var dropDownList = m_RoleDropdown.choices;
+      dropDownList.Clear();
+      dropDownList.Add(SHOW_ALL);
+      bool found = false;
+      foreach (var role in roles)
       {
-        m_RoleDropdown.index = currentIndex;
+        if (m_CurrentRole?.Equals(role) == true)
+        {
+          m_RoleDropdown.index = dropDownList.Count;
+          found = true;
+        }
+        dropDownList.Add(role);
+      }
+
+      if (!found)
+      {
+        m_RoleDropdown.index = 0;
       }
     }
 
     if (m_CategoryDropdown is not null)
     {
-      List<string> categories = _reportPresenter.Categories; // m_Categories.ToList();
-      int currentIndex = categories.FindIndex(x => x.Equals(m_CurrentRole));
-      m_CategoryDropdown.choices = categories;
-      if (currentIndex > -1)
+      var categories = _reportPresenter.Categories; // m_Categories.ToList();
+      var categoryDropdown= m_CategoryDropdown.choices;
+      categoryDropdown.Clear();
+      categoryDropdown.Add(SHOW_ALL);
+      bool found = false;
+      foreach (var category in categories)
       {
-        m_CategoryDropdown.index = currentIndex;
+        if (m_CurrentCategory?.Equals(category) == true)
+        {
+          found = true;
+          m_CategoryDropdown.index = categoryDropdown.Count;
+        }
+        categoryDropdown.Add(category);
+      }
+      if (!found)
+      {
+        m_CategoryDropdown.index = 0;
       }
     }
     
