@@ -209,9 +209,8 @@ public class ReportCenter : EditorWindow
 
     ReportingModifiers reportMod = ReportingModifiers.DefaultDup();
     reportMod.EntriesFilter = FilterObjects;
-
-    var groupedEntries = await _reportPresenter.GenGroupReportsAysnc(reportMod);
-    // var groupedEntries = _reportPresenter.GenGroupedReports(reportMod);
+    
+    var groupedEntries = await _reportPresenter.MakeGroupReportsAsync(reportMod);
 
     if (m_RoleDropdown is not null)
     {

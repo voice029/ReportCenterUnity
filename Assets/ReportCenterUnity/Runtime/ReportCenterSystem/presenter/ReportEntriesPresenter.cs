@@ -8,13 +8,14 @@ namespace ReportCenterSystem
 {
     public class ReportEntriesPresenter
     {
-        private IReportEntries _entries;
-        private IEnumerable<string> _roles = Array.Empty<string>();
-        private IEnumerable<string> _categories = Array.Empty<string>();
-        private HashSet<string> _generatedRoles = new();
-        private HashSet<string> _generatedCategories = new();
-        private HashSet<object> _aggregateSearchables = new();
-
+        
+        private ReportFilterOptions _filterOptions = new ()
+        {
+            GeneratedRoles = new HashSet<string>(),
+            GeneratedCategories = new HashSet<string>(),
+            AggregateSearchables = new HashSet<object>()
+        };
+        
         public ReportEntriesPresenter() { }
 
         public ReportEntriesPresenter(IReportEntries entries)
@@ -30,36 +31,35 @@ namespace ReportCenterSystem
         public List<ReportEntryBase> RawList => RawEnumerable.ToList();
 
         public IEnumerable<ReportEntryBase> RawEnumerable => _entries.Reports;
-
-        public async Task<IEnumerable<IGrouping<object, ReportEntryBase>>> GenGroupReportsAysnc(
-            ReportingModifiers reportingModifiers)
+        
+        public async Task<IEnumerable<IGrouping<object, ReportEntryBase>>> MakeGroupReportsAsync(ReportingModifiers reportingModifiers)
         {
-            return await Task.FromResult(GenGroupedReports(reportingModifiers));
+            return await Task.Run( () => ProduceGroupedReports(RawList, reportingModifiers, ref _filterOptions));
         }
         
-        public IEnumerable<IGrouping<object, ReportEntryBase>> GenGroupedReports(ReportingModifiers reportingModifiers)
+        public static IEnumerable<IGrouping<object, ReportEntryBase>> ProduceGroupedReports(
+            List<ReportEntryBase> entriesFromRawList, ReportingModifiers reportingModifiers,
+            ref ReportFilterOptions filterOptions)
         {
-            
-            _generatedRoles.Clear();
-            _generatedCategories.Clear();
-            _aggregateSearchables.Clear();
-            
-            var entriesFromRawList = RawList;
+            var generatedRoles = filterOptions.GeneratedRoles;
+            var generatedCategories = filterOptions.GeneratedCategories;
+            var aggregateSearchables = filterOptions.AggregateSearchables;
+
             foreach (var entry in entriesFromRawList)
             {
                 foreach (var category in entry.Category)
                 {
-                    _generatedCategories.Add(category);
+                    generatedCategories.Add(category);
                 }
                 
                 foreach (var role in entry.UserRole)
                 {
-                    _generatedRoles.Add(role);
+                    generatedRoles.Add(role);
                 }
                 
                 foreach (var searchable in entry.SearchKeys)
                 {
-                    _aggregateSearchables.Add(searchable);
+                    aggregateSearchables.Add(searchable);
                 }
             }
             
@@ -68,7 +68,7 @@ namespace ReportCenterSystem
                 .Distinct(reportingModifiers.DistinctReportEntryBaseEqualityComparer)
                 .Where(filtererFunc.Invoke)
                 .OrderBy(x => x, reportingModifiers.ReportEntryComparer)
-                .OrderBy(x => x.ObjType, reportingModifiers.TypeComparer)
+                .ThenBy(x => x.ObjType, reportingModifiers.TypeComparer)
                 .GroupBy(x => x.Group)
                 .OrderBy(x => x.Key);
             
@@ -87,15 +87,20 @@ namespace ReportCenterSystem
             set => _categories = value;
         }
 
-        public virtual HashSet<string> GeneratedRoles => _generatedRoles;
+        public virtual HashSet<string> GeneratedRoles => _filterOptions.GeneratedRoles;
 
-        public virtual HashSet<string> GeneratedCategories => _generatedCategories;
+        public virtual HashSet<string> GeneratedCategories => _filterOptions.GeneratedCategories;
 
-        public virtual HashSet<object> GeneratedAggregateSearchables => _aggregateSearchables;
+        public virtual HashSet<object> GeneratedAggregateSearchables => _filterOptions.AggregateSearchables;
         
         public HashSet<string> Roles =>  StaticRoles.Concat(GeneratedRoles).ToHashSet();
 
         public HashSet<string> Categories => StaticCategories.Concat(GeneratedCategories).ToHashSet();
         
+        #region Private Members
+        private IReportEntries _entries;
+        private IEnumerable<string> _roles = Array.Empty<string>();
+        private IEnumerable<string> _categories = Array.Empty<string>();
+        #endregion
     }
 }

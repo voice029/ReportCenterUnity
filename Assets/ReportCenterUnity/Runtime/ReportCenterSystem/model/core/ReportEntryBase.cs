@@ -69,6 +69,11 @@ public abstract class ReportEntryBase
   /// When the user copies the message, this information will be copied too though it is not displayed to the user.
   /// </summary>
   public string CopyDetails;
+
+  /// <summary>
+  /// Any Contacts or Teams that should be reached out to for this Report
+  /// </summary>
+  public string[] Contacts;
   
   public string Id;
 
@@ -131,6 +136,7 @@ public abstract class ReportEntryBase
            || Message?.Contains(uniSearchValue) == true
            || Tooltip?.Contains(uniSearchValue) == true
            || SearchKeys?.Any(x => x.ToString().Contains(uniSearchValue)) == true
-           || Actions?.Any(x => x.Name?.Contains(uniSearchValue) == true || x.Tooltip?.Contains(uniSearchValue) == true) == true;
+           || Actions?.Any(x => x.Name?.Contains(uniSearchValue) == true || x.Tooltip?.Contains(uniSearchValue) == true) == true
+           || Contacts?.Contains(uniSearchValue) == true;
   }
 }
